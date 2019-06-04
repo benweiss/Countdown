@@ -252,9 +252,9 @@ int Enumerate2(Hand* hands_, int* weight_sum) {
           sum += 4;
         }
         
-        hands[0].v[3] = v0;  hands[0].v[4] = v1;
-        hands[1].v[3] = v0;  hands[1].v[4] = v2;
-        hands[2].v[3] = v1;  hands[2].v[4] = v2;
+        hands[0].v[3] = v0;
+        hands[1].v[3] = v1;
+        hands[2].v[3] = v2;
         
         hands += 3;
       }
@@ -478,6 +478,13 @@ static void TestHand(int* hand, int count, uint8_t* mask, int* target) {
 void TestHands(Hand* hands, int num_hands, int weight_sum) {
   int hist[1000] = { 0 };  // whether the 3-digit number can be made (first 100 elements unused)
   
+  /*
+  int ct_967[10][6] = {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}};
+  int wt_967[10][6] = {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}};
+  
+  int tct_967[10][6] = {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}};
+  int twt_967[10][6] = {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}};
+  */
   for (int trial = 0; trial < num_hands; trial++) {
     uint8_t mask[1000] = { 0 };
     
@@ -490,8 +497,16 @@ void TestHands(Hand* hands, int num_hands, int weight_sum) {
     };
     
     TestHand(hand, 6, mask, NULL);  // test hand against all 900 possible 3-digit numbers
+    /*
+    tct_967[hand[0]][trial / (num_hands / 6)] ++;
+    twt_967[hand[0]][trial / (num_hands / 6)] += hands[trial].weight;
     
-    /*  This code finds hands corresponding that can't reach a few values reachable by any other hand.
+    if (mask[967]) {
+      ct_967[hand[0]][trial / (num_hands / 6)] ++;
+      wt_967[hand[0]][trial / (num_hands / 6)] += hands[trial].weight;
+    }
+    */
+    /*  This code finds hands that can't reach the following values reachable by every other hand:
      int test[] = { 109, 113, 116, 120, 121, 129, 130, 141, 176, 201, 225, 275 };
      
      for (int ind = 0; ind < sizeof(test) / sizeof(int); ind++) {
@@ -505,7 +520,17 @@ void TestHands(Hand* hands, int num_hands, int weight_sum) {
       hist[ind] += mask[ind] * hands[trial].weight;
     }
   }
-  
+  /*
+  for (int low = 1; low <= 9; low++) {
+    for (int ind = 0; ind < 1; ind++) {
+      float ct_pct = float(ct_967[low][ind]) / tct_967[low][ind];
+      float wt_pct = float(wt_967[low][ind]) / twt_967[low][ind];
+      printf("Case %i: Low card %i: 967 solvable by %i / %i = %f%% unique hands, %i / %i = %f%% weighted hands\n", ind, low,
+             ct_967[low][ind], tct_967[low][ind], ct_pct * 100,
+             wt_967[low][ind], twt_967[low][ind], wt_pct * 100);
+    }
+  }
+  */
   int ct = 0;
   for (int ind = 100; ind <= 999; ind++) {
     ct += hist[ind];
@@ -574,13 +599,18 @@ void TestHands(Hand* hands, int num_hands, int weight_sum) {
 
 
 static void UnitTestExample() {
-  
-  int hand[6] = { 50, 2, 4, 4, 6, 10 };
-  int target = 687;
+  int hand[6] = { 6, 9, 10, 10, 25, 50 };
+  int target = 967;
   
   uint8_t mask[1000] = { 0 };
   
   TestHand(hand, 6, mask, &target);
+  
+  if (mask[target]) {
+    printf("Target reached!\n");
+  } else {
+    printf("Target not reached!\n");
+  }
   
   int ct = 0;
   for (int ind = 100; ind <= 999; ind++) {
@@ -592,6 +622,9 @@ static void UnitTestExample() {
 }
 
 int main(int argc, const char * argv[]) {
+  // UnitTestExample();
+  // return 0;
+  
   // Note: # of unique hands with [0..4] large cards = { 2850, 5808, 3690, 840, 55 }
   Hand* hands = (Hand*)malloc(sizeof(Hand) * 5808);
   int weight_sum = 0;
